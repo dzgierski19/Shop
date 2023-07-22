@@ -1,2 +1,1 @@
-# TS-OOP
-# TS-OOP
+# TypeScript OOP Exercises
