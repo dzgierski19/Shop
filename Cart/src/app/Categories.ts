@@ -7,5 +7,3 @@ export const CATEGORIES = {
 } as const;
 
 export type Categories = (typeof CATEGORIES)[keyof typeof CATEGORIES];
-
-console.log(CATEGORIES.MALE);

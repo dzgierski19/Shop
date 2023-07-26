@@ -1,33 +1,65 @@
-import { IProduct, Product } from "./Cart";
+import { IProduct, Product } from "./Product";
+import { result } from "./ProductsList";
+import { v4 as uuidv4 } from "uuid";
 
 interface IBasket {
-  id: string;
-  cartDiscount: number;
-  cartTotalPrice: number;
+  readonly id: string;
   products: Product[];
 }
 
 class Basket implements IBasket {
-  id: string;
-  cartDiscount: number;
-  cartTotalPrice: number;
+  readonly id: string;
   products: Product[] = [];
 
-  constructor(
-    id: string,
-    cartDiscount: number,
-    cartTotalPrice: number,
-    products: Product[]
-  ) {
-    this.id = id;
-    this.cartDiscount = cartDiscount;
-    this.cartTotalPrice = cartTotalPrice;
+  constructor(products: Product[]) {
+    this.id = uuidv4();
     this.products = products;
   }
 
-  sumAllProducts = (array: Product[]) => {
-    return this.products.reduce((acc, curr) => this.Product.price + acc);
+  calculateElementsPrice = () => {
+    return this.products.reduce((acc, element) => {
+      acc += element.calculatePriceWithDiscount();
+      return acc;
+    }, 0);
+  };
+
+  showElements = () => {
+    return this.products;
+  };
+
+  deleteProduct = (phrase: string): Product[] => {
+    return result.filter((element) => {
+      if (element.name.toLowerCase().includes(phrase.toLowerCase())) {
+        return false;
+      }
+      return true;
+    });
+  };
+
+  numberOfProducts = () => {
+    return this.products.length;
   };
 }
 
-const sundayShopping = new Basket();
+const myBasket = new Basket(result);
+
+const basketPrice = myBasket.numberOfProducts();
+
+console.log(basketPrice);
+// console.log(result);
+
+class Basket1 {
+  maxProducts: Number;
+  private products: Product[] = [];
+
+  addProduct = (product: Product) => {
+    if (this.products.length > 2) {
+      throw new Error("Please remove product");
+    }
+    this.products.push(product);
+  };
+
+  numberOfProducts() {
+    return this.products.length;
+  }
+}

@@ -7,5 +7,3 @@ export const DISCOUNTS = {
 } as const;
 
 export type Discounts = (typeof DISCOUNTS)[keyof typeof DISCOUNTS];
-
-console.log(DISCOUNTS.TEN_PERCENT_DISCOUNT);

@@ -8,10 +8,10 @@ export interface IProduct {
   id: string;
   price: number;
   discount?: Discounts;
-  calculateDiscount: () => number;
   setNewName: (name: string) => void;
   setNewPrice: (price: number) => void;
   setNewCategory: (category: Categories) => void;
+  calculatePriceWithDiscount: (price: number) => number;
 }
 
 export class Product implements IProduct {
@@ -24,37 +24,28 @@ export class Product implements IProduct {
   constructor(
     name: string,
     category: Categories,
-    id: string,
     price: number,
     discount?: Discounts
   ) {
-    this.isPriceMoreThanZero();
+    this.isPriceMoreThanZero(price);
+    this.isProductEmptyString(name);
     this.name = name;
-    this.isProductEmptyString();
     this.category = category;
     this.id = uuidv4();
     this.price = price;
     this.discount = discount;
-    this.calculateDiscount();
   }
 
-  isProductEmptyString = () => {
-    if (this.name.length === 0) {
+  isProductEmptyString = (name: string) => {
+    if (name.length === 0) {
       throw new Error("Please type something :)");
     }
   };
 
-  isPriceMoreThanZero = () => {
-    if (this.price < 0) {
+  isPriceMoreThanZero = (price: number) => {
+    if (price < 0) {
       throw new Error("Price can't be less than 0");
     }
-  };
-
-  calculateDiscount = (): number => {
-    if (this.discount > 0) {
-      return (this.price = this.price - this.price * (this.discount / 100));
-    }
-    return this.price;
   };
 
   setNewName = (name: string) => {
@@ -66,14 +57,17 @@ export class Product implements IProduct {
   setNewCategory = (category: Categories) => {
     this.category = category;
   };
+  calculatePriceWithDiscount = () => {
+    if (this.discount > 0) {
+      return this.price - this.price * (this.discount / 100);
+    }
+    return this.price;
+  };
 }
 
-const maleJeans = new Product(
-  "22",
-  CATEGORIES.ACCESSORIES,
-  uuidv4(),
-  20,
-  DISCOUNTS.FIFTY_PERCENT_DISCOUNT
+const levisMaleShoes = new Product(
+  "Levi's shoes",
+  CATEGORIES.MALE,
+  100,
+  DISCOUNTS.TWENTY_PERCENT_DISCOUNT
 );
-
-console.log(maleJeans);
