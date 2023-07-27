@@ -11,13 +11,13 @@ export interface IProduct {
   setNewName: (name: string) => void;
   setNewPrice: (price: number) => void;
   setNewCategory: (category: Categories) => void;
-  calculatePriceWithDiscount: (price: number) => number;
+  calculatePriceWithDiscount: () => number;
 }
 
 export class Product implements IProduct {
+  readonly id: string;
   name: string;
   category: Categories;
-  readonly id: string;
   price: number;
   discount?: Discounts;
 
@@ -27,41 +27,49 @@ export class Product implements IProduct {
     price: number,
     discount?: Discounts
   ) {
-    this.isPriceMoreThanZero(price);
     this.isProductEmptyString(name);
+    this.isPriceMoreThanZero(price);
+    this.id = uuidv4();
     this.name = name;
     this.category = category;
-    this.id = uuidv4();
     this.price = price;
     this.discount = discount;
   }
 
-  isProductEmptyString = (name: string) => {
-    if (name.length === 0) {
-      throw new Error("Please type something :)");
-    }
-  };
-
-  isPriceMoreThanZero = (price: number) => {
-    if (price < 0) {
-      throw new Error("Price can't be less than 0");
-    }
-  };
-
   setNewName = (name: string) => {
+    //validacja
     this.name = name;
   };
+
   setNewPrice = (price: number) => {
+    //walidacja
     this.price = price;
   };
+
   setNewCategory = (category: Categories) => {
     this.category = category;
+  };
+
+  setNewDiscount = (discount: Discounts) => {
+    this.discount = discount;
   };
   calculatePriceWithDiscount = () => {
     if (this.discount > 0) {
       return this.price - this.price * (this.discount / 100);
     }
     return this.price;
+  };
+
+  private isProductEmptyString = (name: string) => {
+    if (name.length === 0) {
+      throw new Error("Please type something :)");
+    }
+  };
+
+  private isPriceMoreThanZero = (price: number) => {
+    if (price < 0) {
+      throw new Error("Price can't be less than 0");
+    }
   };
 }
 
@@ -71,3 +79,11 @@ const levisMaleShoes = new Product(
   100,
   DISCOUNTS.TWENTY_PERCENT_DISCOUNT
 );
+
+levisMaleShoes.setNewDiscount(40);
+levisMaleShoes.setNewName("SupeLevis's shoes");
+
+//prywatne metody na dol
+//enkapsulacja
+
+//poczytac o g
