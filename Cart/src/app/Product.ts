@@ -8,10 +8,11 @@ export interface IProduct {
   id: string;
   price: number;
   discount?: Discounts;
+
   setNewName: (name: string) => void;
   setNewPrice: (price: number) => void;
   setNewCategory: (category: Categories) => void;
-  calculatePriceWithDiscount: () => number;
+  calculatePrice: () => number;
 }
 
 export class Product implements IProduct {
@@ -20,7 +21,6 @@ export class Product implements IProduct {
   category: Categories;
   price: number;
   discount?: Discounts;
-
   constructor(
     name: string,
     category: Categories,
@@ -37,12 +37,12 @@ export class Product implements IProduct {
   }
 
   setNewName = (name: string) => {
-    //validacja
+    this.isProductEmptyString(name);
     this.name = name;
   };
 
   setNewPrice = (price: number) => {
-    //walidacja
+    this.isPriceMoreThanZero(price);
     this.price = price;
   };
 
@@ -53,8 +53,8 @@ export class Product implements IProduct {
   setNewDiscount = (discount: Discounts) => {
     this.discount = discount;
   };
-  calculatePriceWithDiscount = () => {
-    if (this.discount > 0) {
+  calculatePrice = () => {
+    if (this.discount) {
       return this.price - this.price * (this.discount / 100);
     }
     return this.price;
@@ -77,13 +77,10 @@ const levisMaleShoes = new Product(
   "Levi's shoes",
   CATEGORIES.MALE,
   100,
-  DISCOUNTS.TWENTY_PERCENT_DISCOUNT
+  DISCOUNTS.TWENTY_PERCENT
 );
 
 levisMaleShoes.setNewDiscount(40);
 levisMaleShoes.setNewName("SupeLevis's shoes");
 
-//prywatne metody na dol
-//enkapsulacja
-
-//poczytac o g
+console.log(levisMaleShoes);

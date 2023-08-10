@@ -1,34 +1,56 @@
+import { EXTRADISCOUNTS, ExtraDiscounts } from "./ExtraDiscounts";
 import { IProduct, Product } from "./Product";
-import { result } from "./ProductsList";
+import { products } from "./ProductsList";
 import { v4 as uuidv4 } from "uuid";
 
-interface IBasket {
+export interface IBasket {
   readonly id: string;
-  products: IProduct[];
+  productsList: IProduct[];
+  extraDiscount?: ExtraDiscounts;
+  finalizedAt?: Date;
+  calculateBasketPrice: () => number;
+  calculateDiscount: () => string;
+  getProducts: () => IProduct[];
+  deleteProduct: (phrase: string) => IProduct[];
+  addProduct: (product: Product) => number;
+  numberOfProducts: () => number;
 }
 
 class Basket implements IBasket {
+  private DISCOUNT_TO_VALUE_MAPPER: Record<ExtraDiscounts, number> = {
+    FIRST_SHOPPING: 10,
+    ROLLING_LOUD_TICKET: 20,
+    SUBSCRIBING_TO_NEWSLETTER: 30,
+  };
+
   // constructor(
   //   public readonly id = uuidv4(),
   //   public products: IProduct[] = []
   // ) {}
 
   readonly id = uuidv4();
-  products: IProduct[];
+  productsList: IProduct[];
+  extraDiscount?: ExtraDiscounts;
+  finalizedAt?: Date;
 
-  constructor(products: IProduct[] = []) {
-    this.products = products;
+  constructor(productsList: IProduct[] = [], extraDiscount?: ExtraDiscounts) {
+    this.productsList = productsList;
+    this.extraDiscount = extraDiscount;
   }
 
-  calculateElementsPriceAfterDiscount() {
-    return this.products.reduce((acc, element) => {
-      acc += element.calculatePriceWithDiscount();
-      return acc;
-    }, 0);
+  calculateBasketPrice() {
+    return Number(
+      this.productsList
+        .reduce((acc, element) => {
+          acc += element.calculatePrice();
+          return acc - (acc * this.getExtraDiscount()) / 100;
+        }, 0)
+        .toFixed(2)
+    );
   }
 
   calculateDiscount() {
-    const priceAfterDiscount = this.calculateElementsPriceAfterDiscount();
+    const priceAfterDiscount = this.calculateBasketPrice();
     const priceWithoutDiscount = this.calculateElementsPrice();
     return (
       (
@@ -38,38 +60,51 @@ class Basket implements IBasket {
     );
   }
 
-  showElements() {
-    return this.products;
+  getProducts() {
+    return this.productsList;
   }
 
-  deleteProduct(phrase: string): IProduct[] {
-    return this.products.filter((element) => {
-      if (element.name.toLowerCase().includes(phrase.toLowerCase())) {
-        return false;
-      }
-      return true;
-    });
+  deleteProduct(id: string): IProduct[] {
+    return this.productsList.filter((element) => element.id !== id);
   }
 
   addProduct(product: Product) {
-    this.products.push(product);
-    return this.products;
+    return this.productsList.push(product);
   }
 
   numberOfProducts() {
-    return this.products.length;
+    return this.productsList.length;
+  }
+
+  finalize() {
+    this.finalizedAt = new Date();
+  }
+
+  setDiscount(discount: number) {
+    if (discount < 0 && discount > 100) {
+      throw new Error("Wrong discount provided, discount must be in rane");
+    }
+    this.extraDiscount = discount;
   }
 
   private calculateElementsPrice() {
-    return this.products.reduce((acc, element) => {
+    return this.productsList.reduce((acc, element) => {
       acc += element.price;
       return acc;
     }, 0);
   }
+  private getExtraDiscount() {
+    return this.extraDiscount > 0 ? this.extraDiscount : 0;
+  }
 }
 
-const myBasket = new Basket(result);
+export const myBasket = new Basket(
+  products,
+  EXTRADISCOUNTS.ROLLING_LOUD_TICKET
+);
 
-const basketWithNewProduct = myBasket.addProduct(result[0]);
+const myBasket2 = new Basket(products, EXTRADISCOUNTS.FIRST_SHOPPING);
 
-console.log(basketWithNewProduct);
+export const shopping = [myBasket, myBasket2];
+
+console.log(myBasket.calculateBasketPrice());

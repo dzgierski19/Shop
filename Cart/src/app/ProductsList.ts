@@ -1,4 +1,4 @@
-import { Product } from "./Product";
+import { IProduct, Product } from "./Product";
 import { CATEGORIES } from "./Categories";
 import { DISCOUNTS } from "./Discounts";
 
@@ -18,16 +18,16 @@ const adidasChildrenShoes = new Product(
   DISCOUNTS.FIFTY_PERCENT_DISCOUNT
 );
 
-const shoePolish = new Product(
+export const shoePolish = new Product(
   "shoe polish",
   CATEGORIES.ACCESSORIES,
   30,
   DISCOUNTS.THIRTY_PERCENT_DISCOUNT
 );
 
-const gucciShoes = new Product("Gucci shoes", CATEGORIES.PREMIUM, 4000);
+export const gucciShoes = new Product("Gucci shoes", CATEGORIES.PREMIUM, 4000);
 
-export const result: Product[] = [
+export const products: Product[] = [
   levisMaleShoes,
   nikeFemaleShoes,
   adidasChildrenShoes,
@@ -35,29 +35,18 @@ export const result: Product[] = [
   gucciShoes,
 ];
 
-// const filterProductsWithDiscount = (): Product[] => {
-//   return result.filter((element) => {
-//     if (element.discount !== undefined) {
-//       return element;
-//     }
-//   });
-// };
+export class ProductsList {
+  constructor(public products: Map<string, IProduct>) {}
 
-// const filteredProductsWithDiscount = filterProductsWithDiscount();
+  addProduct(newProduct: Product) {
+    return products.push(newProduct);
+  }
+  findProduct(id: string) {}
+  deleteProduct(id: string) {}
+}
 
-// const sumDiscounts = (): number => {
-//   const discounts = filteredProductsWithDiscount.reduce((acc, index) => {
-//     const discount = index.price * (100 / (100 - index.discount)) - index.price;
-//     acc.push(discount);
-//     return acc;
-//   }, []);
-//   return discounts.reduce((acc, curr) => acc + curr);
-// };
 
-// const summedDiscounts = sumDiscounts();
+const 
 
-// const discount = ((summedDiscounts / summedPrice) * 100).toFixed(2) + "%";
-
-// console.log(discount);
-
-// czy muszę wpisywać parametr
+// typ map
+console.log ()
