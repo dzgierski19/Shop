@@ -1,110 +1,118 @@
-import { EXTRADISCOUNTS, ExtraDiscounts } from "./ExtraDiscounts";
+import { BONUSCODES, BonusCodes } from "./BonusCodes";
 import { IProduct, Product } from "./Product";
-import { products } from "./ProductsList";
+import {
+  List,
+  ProductList,
+  ProductWithAmount,
+  adidasChildrenShoesWithAmount,
+  nikeFemaleShoesWithAmount,
+  shoePolishWithAmount,
+} from "./ProductsList";
 import { v4 as uuidv4 } from "uuid";
 
 export interface IBasket {
   readonly id: string;
-  productsList: IProduct[];
-  extraDiscount?: ExtraDiscounts;
+  productsList: ProductList;
+  extraDiscount?: number;
   finalizedAt?: Date;
-  calculateBasketPrice: () => number;
-  calculateDiscount: () => string;
-  getProducts: () => IProduct[];
-  deleteProduct: (phrase: string) => IProduct[];
-  addProduct: (product: Product) => number;
-  numberOfProducts: () => number;
+  calculateBasketPriceWithoutDiscount: () => number;
+  calculateBasketPriceAfterDiscount: () => number;
+  calculateDiscount: () => number;
+  // getProducts: () => IProduct[];
+  deleteProduct: (id: string) => void;
+  addProduct: (id: string, product: IProduct) => void;
+  setDiscount: (discount: number) => void;
+  finalize: () => void;
 }
 
-class Basket implements IBasket {
-  private DISCOUNT_TO_VALUE_MAPPER: Record<ExtraDiscounts, number> = {
-    FIRST_SHOPPING: 10,
-    ROLLING_LOUD_TICKET: 20,
-    SUBSCRIBING_TO_NEWSLETTER: 30,
-  };
-
-  // constructor(
-  //   public readonly id = uuidv4(),
-  //   public products: IProduct[] = []
-  // ) {}
-
+export class Basket implements IBasket {
   readonly id = uuidv4();
-  productsList: IProduct[];
-  extraDiscount?: ExtraDiscounts;
+  productsList: ProductList;
+  extraDiscount?: number;
   finalizedAt?: Date;
-
-  constructor(productsList: IProduct[] = [], extraDiscount?: ExtraDiscounts) {
-    this.productsList = productsList;
-    this.extraDiscount = extraDiscount;
+  constructor() {
+    this.productsList = new ProductList();
   }
 
-  calculateBasketPrice() {
+  addProduct(id: string, product: ProductWithAmount): void {
+    this.productsList.addProduct(id, product);
+  }
+
+  deleteProduct(id: string): void {
+    this.productsList.deleteProduct(id);
+  }
+
+  calculateBasketPriceWithoutDiscount(): number {
+    let basketPriceWithoutDiscount = 0;
+    this.productsList.items.forEach((element) => {
+      basketPriceWithoutDiscount += element.price;
+    });
+    return basketPriceWithoutDiscount;
+  }
+
+  calculateBasketPriceAfterDiscount(): number {
+    let basketPriceAfterDiscount = 0;
+    this.productsList.items.forEach((element) => {
+      if (!element.discount) {
+        return (basketPriceAfterDiscount += element.price);
+      }
+      basketPriceAfterDiscount +=
+        element.price - element.price * (element.discount / 100);
+    });
+    return basketPriceAfterDiscount;
+  }
+  calculateDiscount(): number {
     return Number(
-      this.productsList
-        .reduce((acc, element) => {
-          acc += element.calculatePrice();
-          return acc - (acc * this.getExtraDiscount()) / 100;
-        }, 0)
-        .toFixed(2)
-    );
-  }
-
-  calculateDiscount() {
-    const priceAfterDiscount = this.calculateBasketPrice();
-    const priceWithoutDiscount = this.calculateElementsPrice();
-    return (
       (
-        ((priceWithoutDiscount - priceAfterDiscount) / priceWithoutDiscount) *
-        100
-      ).toFixed(2) + "%"
+        1 -
+        this.calculateBasketPriceAfterDiscount() /
+          this.calculateBasketPriceWithoutDiscount()
+      ).toFixed(2)
     );
   }
 
-  getProducts() {
-    return this.productsList;
-  }
+  // getProducts(): IProduct[] {
+  //   return this.products;
+  // }
 
-  deleteProduct(id: string): IProduct[] {
-    return this.productsList.filter((element) => element.id !== id);
-  }
-
-  addProduct(product: Product) {
-    return this.productsList.push(product);
-  }
-
-  numberOfProducts() {
-    return this.productsList.length;
+  setDiscount(discount: number): void {
+    this.isDiscountInRange(discount);
+    this.extraDiscount = discount;
   }
 
   finalize() {
     this.finalizedAt = new Date();
   }
 
-  setDiscount(discount: number) {
-    if (discount < 0 && discount > 100) {
-      throw new Error("Wrong discount provided, discount must be in rane");
+  private isDiscountInRange(discount: number) {
+    if (discount < 0 || discount > 100) {
+      throw new Error("Wrong discount provided, discount must be in range");
     }
-    this.extraDiscount = discount;
-  }
-
-  private calculateElementsPrice() {
-    return this.productsList.reduce((acc, element) => {
-      acc += element.price;
-      return acc;
-    }, 0);
-  }
-  private getExtraDiscount() {
-    return this.extraDiscount > 0 ? this.extraDiscount : 0;
+    return discount;
   }
 }
 
-export const myBasket = new Basket(
-  products,
-  EXTRADISCOUNTS.ROLLING_LOUD_TICKET
+const myBasket = new Basket();
+
+myBasket.addProduct(shoePolishWithAmount.id, shoePolishWithAmount);
+
+myBasket.addProduct(nikeFemaleShoesWithAmount.id, nikeFemaleShoesWithAmount);
+
+myBasket.addProduct(
+  adidasChildrenShoesWithAmount.id,
+  adidasChildrenShoesWithAmount
 );
 
-const myBasket2 = new Basket(products, EXTRADISCOUNTS.FIRST_SHOPPING);
+console.log(myBasket);
 
-export const shopping = [myBasket, myBasket2];
+console.log(myBasket.calculateDiscount());
 
-console.log(myBasket.calculateBasketPrice());
+myBasket.setDiscount(55);
+myBasket.finalize();
+console.log(myBasket);
+
+// const myBasket2 = new Basket(productsFromProductsList);
+
+//forEach
+
+//zmienić na map

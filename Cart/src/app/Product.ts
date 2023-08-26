@@ -1,6 +1,7 @@
 import { CATEGORIES, Categories } from "./Categories";
 import { DISCOUNTS, Discounts } from "./Discounts";
 import { v4 as uuidv4 } from "uuid";
+import { nikeFemaleShoesWithAmount } from "./ProductsList";
 
 export interface IProduct {
   name: string;
@@ -29,6 +30,7 @@ export class Product implements IProduct {
   ) {
     this.isProductEmptyString(name);
     this.isPriceMoreThanZero(price);
+    this.isDiscountInRange(discount);
     this.id = uuidv4();
     this.name = name;
     this.category = category;
@@ -51,6 +53,7 @@ export class Product implements IProduct {
   };
 
   setNewDiscount = (discount: Discounts) => {
+    this.isDiscountInRange(discount);
     this.discount = discount;
   };
   calculatePrice = () => {
@@ -60,9 +63,16 @@ export class Product implements IProduct {
     return this.price;
   };
 
+  private isDiscountInRange(discount: number): number {
+    if (discount < 0 && discount > 100) {
+      throw new Error("Wrong discount provided, discount must be in range");
+    }
+    return discount;
+  }
+
   private isProductEmptyString = (name: string) => {
     if (name.length === 0) {
-      throw new Error("Please type something :)");
+      throw new Error("Please type something");
     }
   };
 
@@ -79,8 +89,3 @@ const levisMaleShoes = new Product(
   100,
   DISCOUNTS.TWENTY_PERCENT
 );
-
-levisMaleShoes.setNewDiscount(40);
-levisMaleShoes.setNewName("SupeLevis's shoes");
-
-console.log(levisMaleShoes);
