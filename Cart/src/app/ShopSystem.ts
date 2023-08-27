@@ -1,26 +1,21 @@
 import { Basket, IBasket } from "./Basket";
 import { CATEGORIES, Categories } from "./Categories";
-import { DISCOUNTS } from "./Discounts";
 import { BonusCodes, BONUSCODES } from "./BonusCodes";
-import { IProduct } from "./Product";
-import {
-  List,
-  ProductList,
-  ProductWithAmount,
-  levisMaleShoesWithAmount,
-  products,
-  shoePolishWithAmount,
-} from "./ProductsList";
+import { IProduct, Product } from "./Product";
+import { List, ProductList, levisMaleShoes, shoePolish } from "./ProductsList";
 
 class BasketList extends List<IBasket> {}
 
 interface IShopSystem {
   baskets: BasketList;
-  // finalizedBaskets?: BasketList;
-  finalizedBaskets?: Map<string, IBasket>;
+  finalizedBaskets?: BasketList;
   shopProducts: ProductList;
-  addProductsToShop: (productID: string, product: IProduct) => void;
-  deleteProductFromShop: (id: string) => void;
+  addProductToShop: (
+    roductID: string,
+    product: Product,
+    amount: number
+  ) => void;
+  deleteProductFromShop: (productID: string, amount: number) => void;
   isProductAvailableinShop: (productID: string) => boolean;
   // showAndCalculateNumberOfProducts: (basketId: string) => IBasket[];
   // showListOfUsedDiscountCodes: () => IBasket[];
@@ -30,54 +25,113 @@ interface IShopSystem {
 
 class ShopSystem implements IShopSystem {
   baskets: BasketList;
-  // finalizedBaskets?: BasketList;
-  finalizedBaskets?: Map<string, IBasket>;
+  finalizedBaskets?: BasketList;
   shopProducts: ProductList;
-  private DISCOUNT_TO_VALUE_MAPPER: Record<BonusCodes, number> = {
+  DISCOUNT_TO_VALUE_MAPPER: Record<BonusCodes, number> = {
     FIRST_SHOPPING: 10,
+    HAPPY_BASKET: 10,
     ROLLING_LOUD_TICKET: 20,
     SUBSCRIBING_TO_NEWSLETTER: 30,
   };
 
   constructor() {
     this.baskets = new BasketList();
-    this.finalizedBaskets = new Map<string, IBasket>();
+    this.finalizedBaskets = new BasketList();
     this.shopProducts = new ProductList();
   }
 
-  addProductsToShop(productID: string, product: ProductWithAmount): void {
-    this.shopProducts.addProduct(productID, product);
+  addProductToShop(productID: string, product: Product, amount: number): void {
+    this.shopProducts.addProductWithAmount(productID, product, amount);
   }
-  deleteProductFromShop(productID: string): void {
-    this.shopProducts.deleteProduct(productID);
+  deleteProductFromShop(productID: string, amount: number): void {
+    this.shopProducts.deleteProductWithAmount(productID, amount);
   }
   isProductAvailableinShop(productID: string): boolean {
-    return this.shopProducts.findProduct(productID);
+    this.isProductAvailableInShopSystem(productID, this.shopProducts);
+    return true;
   }
   changeProductCategory = (id: string, category: Categories): void => {
-    this.shopProducts.items.get(id).category = category;
+    this.shopProducts.items.get(id).product.category = category;
   };
 
   addNewBasket(): void {
-    const newBasket = new Basket();
-    this.baskets.items.set(newBasket.id, newBasket);
+    this.baskets.items.set(new Basket().id, new Basket());
   }
 
-  addProductsToBasket(
+  addProductToBasket(
     productID: string,
-    product: ProductWithAmount,
+    product: Product,
+    amount: number,
     basketID: string
   ): void {
-    if (!this.shopProducts.items.get(productID)) {
+    this.isProductAvailableInShopSystem(productID, this.shopProducts);
+    this.isBasketAvailable(basketID, this.baskets);
+    const basket = this.baskets.items.get(basketID);
+    basket.addProduct(productID, product, amount);
+  }
+
+  isProductAmountAvailableInShop(amount, productID) {}
+
+  deleteProductFromBasket(
+    productID: string,
+    basketID: string,
+    amount: number
+  ): void {
+    this.isProductAvailableInShopSystem(productID, this.shopProducts);
+    this.isBasketAvailable(basketID, this.baskets);
+    const basket = this.baskets.items.get(basketID);
+    basket.deleteProduct(productID, amount);
+  }
+
+  addBonusCode(bonusCode: BonusCodes, basketID: string): void {
+    this.isBasketAvailable(basketID, this.baskets);
+    const basket = this.baskets.items.get(basketID);
+    this.isBonusCodeAvailable(bonusCode);
+    basket.setDiscount(this.DISCOUNT_TO_VALUE_MAPPER[bonusCode]);
+  }
+
+  finalizeBasket(basketId: string) {
+    this.isBasketAvailable(basketId, this.baskets);
+    this.baskets.items.get(basketId).finalize();
+    this.finalizedBaskets.items.set(basketId, this.baskets.items.get(basketId));
+    if (this.finalizedBaskets.items.get(basketId).extraDiscount) {
+      const keyFromBasket = Object.keys(this.DISCOUNT_TO_VALUE_MAPPER).find(
+        (key) => {
+          return (
+            this.DISCOUNT_TO_VALUE_MAPPER[key] ===
+            this.baskets.items.get(basketId).extraDiscount
+          );
+        }
+      );
+      delete this.DISCOUNT_TO_VALUE_MAPPER[keyFromBasket];
+    }
+  }
+
+  private isBonusCodeAvailable(bonusCode: BonusCodes) {
+    if (
+      !Object.keys(this.DISCOUNT_TO_VALUE_MAPPER).filter(
+        (element) => element === bonusCode
+      )
+    ) {
+      throw new Error("This bonus code is already used or is expired");
+    }
+  }
+
+  private isProductAvailableInShopSystem(
+    productID: string,
+    list: ProductList
+  ): void {
+    if (!list.items.get(productID)) {
       throw new Error(
         "Product is not available at this time. Please try again later"
       );
     }
-    if (!this.shopProducts.items.get(basketID)) {
-      throw new Error(`Please add basket with id: ${basketID}`);
+  }
+
+  private isBasketAvailable(basketID: string, list: BasketList): void {
+    if (!list.items.get(basketID)) {
+      throw new Error(`Please add basket to ShopList with id: ${basketID}`);
     }
-    const basket = this.baskets.items.get(basketID);
-    basket.addProduct(productID, product);
   }
 
   //   showAndCalculateNumberOfProducts = (basketId: string) => {
@@ -123,16 +177,6 @@ class ShopSystem implements IShopSystem {
   //     return acc;
   //   }, []);
   // };
-
-  addBonusCode(): void {}
-
-  finalizeBasket(basketId: string) {
-    if (!this.baskets.items.get(basketId)) {
-      throw new Error("Basket is not available");
-    }
-    this.baskets.items.get(basketId).finalize();
-    this.finalizedBaskets.set(basketId, this.baskets.items.get(basketId));
-  }
 }
 
 // liste kodow rabatowych zrealizowanych i nie zrealizowanych, // UNIKALNE
@@ -145,26 +189,55 @@ class ShopSystem implements IShopSystem {
 // OK addProductsToShop mozliwosc dodania produktu lub produktow do skelpu,
 
 const shopSystem = new ShopSystem();
-// shopSystem.addNewBasket();
-shopSystem.addProductsToShop(shoePolishWithAmount.id, shoePolishWithAmount);
+shopSystem.addProductToShop(shoePolish.id, shoePolish, 10);
 
-shopSystem.changeProductCategory(shoePolishWithAmount.id, CATEGORIES.CHILDREN);
+shopSystem.changeProductCategory(shoePolish.id, CATEGORIES.CHILDREN);
+
+shopSystem.addProductToShop(levisMaleShoes.id, levisMaleShoes, 20);
 
 shopSystem.addNewBasket();
+shopSystem.addNewBasket();
+
+shopSystem.addProductToBasket(
+  shoePolish.id,
+  shoePolish,
+  20,
+  [...shopSystem.baskets.items.keys()][0]
+);
+
+shopSystem.addProductToBasket(
+  levisMaleShoes.id,
+  levisMaleShoes,
+  10,
+  [...shopSystem.baskets.items.keys()][1]
+);
+
+shopSystem.deleteProductFromBasket(
+  levisMaleShoes.id,
+  [...shopSystem.baskets.items.keys()][1],
+  20
+);
+
+console.log(shopSystem, [...shopSystem.baskets.items.keys()][1]);
+
+shopSystem.addBonusCode(
+  BONUSCODES.FIRST_SHOPPING,
+  [...shopSystem.baskets.items.keys()][1]
+);
+
+shopSystem.finalizeBasket([...shopSystem.baskets.items.keys()][1]);
+
+shopSystem.addBonusCode(
+  BONUSCODES.FIRST_SHOPPING,
+  [...shopSystem.baskets.items.keys()][0]
+);
 
 console.log(shopSystem);
+console.dir(shopSystem, { depth: null });
+// console.log(shopSystem.DISCOUNT_TO_VALUE_MAPPER)
 
-const a = shopSystem.baskets.items.keys()[0];
-
-console.log(a);
-
-// shopSystem.addProductsToBasket(
-//   shoePolishWithAmount.id,
-//   shoePolishWithAmount,
-//   "ss"
-// );
-
-// console.log(shopSystem);
-// console.log(shoePolishWithAmount);
-// console.log(shopSystem);
-// console.log(shopSystem.isProductAvailableinShop(shoePolishWithAmount.id));
+// 1. ustawiasz discount w shopsystemie dla koszyka
+// 2. w shopd systemie sprawdzasz, czy ten kod jest dostępny
+// 3. ustawiasz go w Basket
+// 4. basket liczy sobie cene po znizce
+// 5. jak koszyk się zrealizacuje, to ustawiasz kod na zuzyty

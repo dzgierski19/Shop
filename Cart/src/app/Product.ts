@@ -1,7 +1,6 @@
 import { CATEGORIES, Categories } from "./Categories";
 import { DISCOUNTS, Discounts } from "./Discounts";
 import { v4 as uuidv4 } from "uuid";
-import { nikeFemaleShoesWithAmount } from "./ProductsList";
 
 export interface IProduct {
   name: string;
@@ -82,10 +81,3 @@ export class Product implements IProduct {
     }
   };
 }
-
-const levisMaleShoes = new Product(
-  "Levi's shoes",
-  CATEGORIES.MALE,
-  100,
-  DISCOUNTS.TWENTY_PERCENT
-);

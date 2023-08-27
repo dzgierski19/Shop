@@ -1,13 +1,6 @@
 import { BONUSCODES, BonusCodes } from "./BonusCodes";
 import { IProduct, Product } from "./Product";
-import {
-  List,
-  ProductList,
-  ProductWithAmount,
-  adidasChildrenShoesWithAmount,
-  nikeFemaleShoesWithAmount,
-  shoePolishWithAmount,
-} from "./ProductsList";
+import { List, ProductList, nikeFemaleShoes, shoePolish } from "./ProductsList";
 import { v4 as uuidv4 } from "uuid";
 
 export interface IBasket {
@@ -19,8 +12,8 @@ export interface IBasket {
   calculateBasketPriceAfterDiscount: () => number;
   calculateDiscount: () => number;
   // getProducts: () => IProduct[];
-  deleteProduct: (id: string) => void;
-  addProduct: (id: string, product: IProduct) => void;
+  deleteProduct: (id: string, amount: number) => void;
+  addProduct: (id: string, product: Product, amount: number) => void;
   setDiscount: (discount: number) => void;
   finalize: () => void;
 }
@@ -34,18 +27,18 @@ export class Basket implements IBasket {
     this.productsList = new ProductList();
   }
 
-  addProduct(id: string, product: ProductWithAmount): void {
-    this.productsList.addProduct(id, product);
+  addProduct(id: string, product: Product, amount: number): void {
+    this.productsList.addProductWithAmount(id, product, amount);
   }
 
-  deleteProduct(id: string): void {
-    this.productsList.deleteProduct(id);
+  deleteProduct(id: string, amount: number): void {
+    this.productsList.deleteProductWithAmount(id, amount);
   }
 
   calculateBasketPriceWithoutDiscount(): number {
     let basketPriceWithoutDiscount = 0;
     this.productsList.items.forEach((element) => {
-      basketPriceWithoutDiscount += element.price;
+      basketPriceWithoutDiscount += element.product.price * element.amount;
     });
     return basketPriceWithoutDiscount;
   }
@@ -53,14 +46,17 @@ export class Basket implements IBasket {
   calculateBasketPriceAfterDiscount(): number {
     let basketPriceAfterDiscount = 0;
     this.productsList.items.forEach((element) => {
-      if (!element.discount) {
-        return (basketPriceAfterDiscount += element.price);
-      }
       basketPriceAfterDiscount +=
-        element.price - element.price * (element.discount / 100);
+        element.product.calculatePrice() * element.amount;
     });
+    if (this.extraDiscount) {
+      return (basketPriceAfterDiscount =
+        basketPriceAfterDiscount -
+        basketPriceAfterDiscount * (this.extraDiscount / 100));
+    }
     return basketPriceAfterDiscount;
   }
+
   calculateDiscount(): number {
     return Number(
       (
@@ -94,25 +90,11 @@ export class Basket implements IBasket {
 
 const myBasket = new Basket();
 
-myBasket.addProduct(shoePolishWithAmount.id, shoePolishWithAmount);
+myBasket.addProduct(shoePolish.id, shoePolish, 5);
 
-myBasket.addProduct(nikeFemaleShoesWithAmount.id, nikeFemaleShoesWithAmount);
+myBasket.addProduct(nikeFemaleShoes.id, nikeFemaleShoes, 5);
 
-myBasket.addProduct(
-  adidasChildrenShoesWithAmount.id,
-  adidasChildrenShoesWithAmount
-);
-
-console.log(myBasket);
-
-console.log(myBasket.calculateDiscount());
-
-myBasket.setDiscount(55);
+myBasket.setDiscount(5);
 myBasket.finalize();
-console.log(myBasket);
 
-// const myBasket2 = new Basket(productsFromProductsList);
-
-//forEach
-
-//zmienić na map
+// console.dir(myBasket, { depth: null });

@@ -2,50 +2,43 @@ import { IProduct, Product } from "./Product";
 import { CATEGORIES } from "./Categories";
 import { DISCOUNTS } from "./Discounts";
 
-const levisMaleShoes = new Product(
+export const levisMaleShoes = new Product(
   "Levi's shoes",
   CATEGORIES.MALE,
   100,
   DISCOUNTS.TWENTY_PERCENT
 );
 
-const nikeFemaleShoes = new Product("Nike shoes", CATEGORIES.FEMALE, 125);
+export const nikeFemaleShoes = new Product(
+  "Nike shoes",
+  CATEGORIES.FEMALE,
+  125
+);
 
-const adidasChildrenShoes = new Product(
+export const adidasChildrenShoes = new Product(
   "New Balance shoes",
   CATEGORIES.CHILDREN,
   125,
   DISCOUNTS.FIFTY_PERCENT
 );
 
-const shoePolish = new Product(
+export const shoePolish = new Product(
   "shoe polish",
   CATEGORIES.ACCESSORIES,
   30,
   DISCOUNTS.THIRTY_PERCENT
 );
 
-const gucciShoes = new Product("Gucci shoes", CATEGORIES.PREMIUM, 4000);
+export const gucciShoes = new Product("Gucci shoes", CATEGORIES.PREMIUM, 4000);
 
-export const shoePolishWithAmount = Object.assign(shoePolish, { amount: 5 });
-export const adidasChildrenShoesWithAmount = Object.assign(
-  adidasChildrenShoes,
-  {
-    amount: 10,
-  }
-);
-export const nikeFemaleShoesWithAmount = Object.assign(nikeFemaleShoes, {
-  amount: 6,
-});
-export const levisMaleShoesWithAmount = Object.assign(levisMaleShoes, {
-  amount: 3,
-});
-export const gucciShoesWithAmount = Object.assign(gucciShoes, { amount: 2 });
-
-// delete gucciShoes.category;
-// const newPolish = Object.defineProperty(shoePolish, "amount", { value: 5 });
-
-console.log(gucciShoes);
+// export const shoePolishWithAmount = { shoePolish, amount: 5 };
+// export const adidasChildrenShoesWithAmount = {
+//   adidasChildrenShoes,
+//   amount: 10,
+// };
+// export const nikeFemaleShoesWithAmount = { nikeFemaleShoes, amount: 5 };
+// export const levisMaleShoesWithAmount = { levisMaleShoes, amount: 3 };
+// export const gucciShoesWithAmount = { gucciShoes, amount: 2 };
 
 export const products = new Map<string, IProduct>();
 products.set(levisMaleShoes.id, levisMaleShoes);
@@ -59,47 +52,61 @@ export class List<T> {
   addProduct(productID: string, product: T): void {
     this.items.set(productID, product);
   }
+
   findProduct(id: string): boolean {
     return this.items.has(id);
   }
+
   deleteProduct(id: string): void {
     this.items.delete(id);
   }
 }
 
-// {products: IProduct,
-// amount: number}
+export type ProductWithAmount = { product: IProduct; amount: number };
 
-export type ProductWithAmount = IProduct & { amount: number };
+export class ProductList extends List<ProductWithAmount> {
+  addProductWithAmount(
+    productID: string,
+    product: Product,
+    amount: number
+  ): void {
+    this.items.set(productID, { product, amount });
+  }
+  deleteProductWithAmount(productID: string, amount: number): void {
+    this.isAmountAvailable(productID, amount);
+    const actualAmount = this.items.get(productID).amount;
+    const amountAfterDeleting = actualAmount - amount;
+    if (amountAfterDeleting === 0) {
+      this.deleteProduct(productID);
+    } else this.items.get(productID).amount = amountAfterDeleting;
+  }
 
-export class ProductList extends List<ProductWithAmount> {}
+  private isAmountAvailable(id: string, amount: number): void {
+    if (amount > this.items.get(id).amount) {
+      throw new Error(
+        `Maximum number of ${
+          this.items.get(id).product.name
+        } you can delete is ${this.items.get(id).amount}.`
+      );
+    }
+  }
+}
 
-const productListWithAmounts = new ProductList();
-productListWithAmounts.items.set(shoePolishWithAmount.id, shoePolishWithAmount);
-productListWithAmounts.items.set(
-  adidasChildrenShoesWithAmount.id,
-  adidasChildrenShoesWithAmount
-);
-productListWithAmounts.items.set(gucciShoesWithAmount.id, gucciShoesWithAmount);
-productListWithAmounts.items.set(
-  nikeFemaleShoesWithAmount.id,
-  nikeFemaleShoesWithAmount
-);
-productListWithAmounts.items.set(
-  levisMaleShoesWithAmount.id,
-  levisMaleShoesWithAmount
-);
+const productList = new ProductList();
+productList.addProductWithAmount(levisMaleShoes.id, levisMaleShoes, 4);
+productList.addProductWithAmount(shoePolish.id, shoePolish, 10);
+productList.deleteProductWithAmount(shoePolish.id, 6);
+productList.addProductWithAmount(nikeFemaleShoes.id, nikeFemaleShoes, 6);
+productList.addProductWithAmount(levisMaleShoes.id, levisMaleShoes, 10);
+productList.addProductWithAmount(gucciShoes.id, gucciShoes, 3);
+productList.deleteProductWithAmount(gucciShoes.id, 2);
 
-console.log(productListWithAmounts);
-// shopProductsList.addProduct(shoePolish.id, shoePolish); // console.log(shopProductsList.findProduct(shoePolish.id)); // export const shopProductsList = new ProductList(products); // } //   amount: number //   ...IProduct, // {
-// console.log(shopProductsList);
-// console.log(shopProductsList.findProduct(shoePolish.id));
-// console.log(shopProductsList.products.values());
-// shopProductsList.deleteProduct(shoePolish.id);
+console.log(productList);
+
+console.log(productList.findProduct(levisMaleShoes.id));
 
 // [...mapa]
 
-// 1. Dlaczego, gdy w 48. linijce robie console.log to uwzglednia amount, a nie moge go przypisac do ProductListWithAmounts
 // 2. projekt pod UOD
 
-console.log(adidasChildrenShoes);
+// w 81 musiałem dodać else bo wywalalo blad przy wyszukiwaniu gdy bylo 0 produktow
