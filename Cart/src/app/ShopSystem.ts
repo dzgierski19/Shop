@@ -82,6 +82,16 @@ class ShopSystem implements IShopSystem {
     this.isBasketAvailable(basketID);
     const basket = this.baskets.items.get(basketID);
     basket.addProduct(productID, product, amount);
+    if (
+      basket.productsList.items.get(productID).amount >
+      this.shopProducts.items.get(productID).amount
+    ) {
+      throw new Error(
+        `We have ${this.shopProducts.items.get(productID).amount} of ${
+          this.shopProducts.items.get(productID).product.name
+        } available.`
+      );
+    }
   }
 
   deleteProductFromBasket(
@@ -188,8 +198,10 @@ class ShopSystem implements IShopSystem {
   }
 
   private isBonusCodeAvailable(bonusCode: BonusCodes): void {
-    if (availableBonusCodes.get(bonusCode).wasUsed === true) {
-      throw new Error(`${bonusCode} is already used or is expired`);
+    if (bonusCode) {
+      if (availableBonusCodes.get(bonusCode).wasUsed === true) {
+        throw new Error(`${bonusCode} is already used or is expired`);
+      }
     }
   }
 
@@ -215,49 +227,72 @@ class ShopSystem implements IShopSystem {
 }
 
 const shopSystem = new ShopSystem();
+
 shopSystem.addProductToShop(shoePolish.id, shoePolish, 10);
 
-shopSystem.changeProductCategory(shoePolish.id, CATEGORIES.CHILDREN);
-
 shopSystem.addProductToShop(levisMaleShoes.id, levisMaleShoes, 20);
-shopSystem.addCreatedBasket(myBasket);
 shopSystem.addNewBasket();
-shopSystem.addProductToBasket(
-  shoePolish.id,
-  shoePolish,
-  5,
-  [...shopSystem.baskets.items.keys()][0]
-);
-
-shopSystem.addBonusCode(
-  [...shopSystem.baskets.items.keys()][0],
-  "HAPPY_BASKET"
-);
-
-// shopSystem.finalizeBasket([...shopSystem.baskets.items.keys()][0]);
+shopSystem.addCreatedBasket(myBasket);
 
 shopSystem.addProductToBasket(
   levisMaleShoes.id,
   levisMaleShoes,
-  5,
+  21,
   [...shopSystem.baskets.items.keys()][0]
 );
 
-console.dir(shopSystem, { depth: null });
+shopSystem.addProductToBasket(
+  levisMaleShoes.id,
+  levisMaleShoes,
+  1,
+  [...shopSystem.baskets.items.keys()][1]
+);
+// shopSystem.addProductToBasket(shoePolish.id, shoePolish, 5, basketArray[0]);
 
-// console.log(shopSystem.baskets);
+shopSystem.finalizeBasket([...shopSystem.baskets.items.keys()][1]);
 
 shopSystem.finalizeBasket([...shopSystem.baskets.items.keys()][0]);
 
-shopSystem.addBonusCode(myBasket.id, "FIRST_SHOPPING");
+console.dir(shopSystem.listFinalizedBasket(), { depth: null });
+console.log(shopSystem.shopProducts);
+
+// shopSystem.addBonusCode(
+//   [...shopSystem.baskets.items.keys()][1],
+//   "HAPPY_BASKET"
+// );
+
+// shopSystem.addProductToBasket(
+//   levisMaleShoes.id,
+//   levisMaleShoes,
+//   5,
+//   [...shopSystem.baskets.items.keys()][0]
+// );
+
+// console.log(shopSystem.finalizedBaskets);
 
 // shopSystem.finalizeBasket(myBasket.id);
 
-// console.log(shopSystem);
-// console.dir(shopSystem, { depth: null });
+// shopSystem.addNewBasket();
 
-console.log(shopSystem.finalizedBaskets);
+// shopSystem.addProductToBasket(
+//   shoePolish.id,
+//   shoePolish,
+//   5,
+//   [...shopSystem.baskets.items.keys()][1]
+// );
 
-console.log(availableBonusCodes);
+// shopSystem.addBonusCode(
+//   [...shopSystem.baskets.items.keys()][1],
+//   "FIRST_SHOPPING"
+// );
+
+// shopSystem.finalizeBasket([...shopSystem.baskets.items.keys()][1]);
+// shopSystem.finalizeBasket([...shopSystem.baskets.items.keys()][0]);
 
 // console.log(shopSystem.showListOfUnusedBonusCodes());
+
+// console.log(availableBonusCodes);
+
+// console.log(shopSystem.finalizedBaskets);
+
+// console.log(shopSystem.baskets);

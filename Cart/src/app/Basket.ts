@@ -116,12 +116,10 @@ export const myBasket = new Basket();
 
 myBasket.addProduct(shoePolish.id, shoePolish, 5);
 
-myBasket.deleteProduct(shoePolish.id, 5);
+// myBasket.deleteProduct(shoePolish.id, 5);
 
 // myBasket.addProduct(adidasChildrenShoes.id, adidasChildrenShoes, 5);
 
 // myBasket.addProduct(gucciShoes.id, gucciShoes, 5);
-
-myBasket.addBonusCode("HAPPY_BASKET");
 
 // console.dir(myBasket, { depth: null });

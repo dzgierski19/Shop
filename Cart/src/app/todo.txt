@@ -1,2 +1,0 @@
-1. add amount products from basket to shopProducts
-2. add names of BonusCodes in basket
