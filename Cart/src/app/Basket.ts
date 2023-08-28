@@ -1,6 +1,14 @@
-import { BONUSCODES, BonusCodes } from "./BonusCodes";
+import { BONUSCODES, BonusCodes, availableBonusCodes } from "./BonusCodes";
 import { IProduct, Product } from "./Product";
-import { List, ProductList, nikeFemaleShoes, shoePolish } from "./ProductsList";
+import {
+  List,
+  ProductList,
+  adidasChildrenShoes,
+  gucciShoes,
+  levisMaleShoes,
+  nikeFemaleShoes,
+  shoePolish,
+} from "./ProductsList";
 import { v4 as uuidv4 } from "uuid";
 
 export interface IBasket {
@@ -8,19 +16,22 @@ export interface IBasket {
   productsList: ProductList;
   extraDiscount?: number;
   finalizedAt?: Date;
+  bonusCode?: BonusCodes;
   calculateBasketPriceWithoutDiscount: () => number;
   calculateBasketPriceAfterDiscount: () => number;
   calculateDiscount: () => number;
   // getProducts: () => IProduct[];
   deleteProduct: (id: string, amount: number) => void;
   addProduct: (id: string, product: Product, amount: number) => void;
-  setDiscount: (discount: number) => void;
+  // setDiscount: (discount: number) => void;
+  addBonusCode: (bonusCode: BonusCodes) => void;
   finalize: () => void;
 }
 
 export class Basket implements IBasket {
   readonly id = uuidv4();
   productsList: ProductList;
+  bonusCode?: BonusCodes;
   extraDiscount?: number;
   finalizedAt?: Date;
   constructor() {
@@ -70,14 +81,27 @@ export class Basket implements IBasket {
   // getProducts(): IProduct[] {
   //   return this.products;
   // }
+  addBonusCode(bonusCode: BonusCodes): void {
+    this.bonusCode = bonusCode;
+    this.setDiscount(availableBonusCodes.get(bonusCode).value);
+  }
 
-  setDiscount(discount: number): void {
+  private setDiscount(discount: number): void {
     this.isDiscountInRange(discount);
     this.extraDiscount = discount;
   }
 
   finalize() {
+    this.isBasketEmpty();
     this.finalizedAt = new Date();
+  }
+
+  private isBasketEmpty(): void {
+    if (this.productsList.items.size === 0) {
+      throw new Error(
+        `You can't finalize empty Basket. Please add some products to basket : ${this.id} !`
+      );
+    }
   }
 
   private isDiscountInRange(discount: number) {
@@ -88,13 +112,16 @@ export class Basket implements IBasket {
   }
 }
 
-const myBasket = new Basket();
+export const myBasket = new Basket();
 
 myBasket.addProduct(shoePolish.id, shoePolish, 5);
 
-myBasket.addProduct(nikeFemaleShoes.id, nikeFemaleShoes, 5);
+myBasket.deleteProduct(shoePolish.id, 5);
 
-myBasket.setDiscount(5);
-myBasket.finalize();
+// myBasket.addProduct(adidasChildrenShoes.id, adidasChildrenShoes, 5);
+
+// myBasket.addProduct(gucciShoes.id, gucciShoes, 5);
+
+myBasket.addBonusCode("HAPPY_BASKET");
 
 // console.dir(myBasket, { depth: null });

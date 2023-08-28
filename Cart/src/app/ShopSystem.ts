@@ -1,8 +1,14 @@
-import { Basket, IBasket } from "./Basket";
+import { Basket, IBasket, myBasket } from "./Basket";
 import { CATEGORIES, Categories } from "./Categories";
-import { BonusCodes, BONUSCODES } from "./BonusCodes";
+import { BonusCodes, BONUSCODES, availableBonusCodes } from "./BonusCodes";
 import { IProduct, Product } from "./Product";
-import { List, ProductList, levisMaleShoes, shoePolish } from "./ProductsList";
+import {
+  List,
+  ProductList,
+  adidasChildrenShoes,
+  levisMaleShoes,
+  shoePolish,
+} from "./ProductsList";
 
 class BasketList extends List<IBasket> {}
 
@@ -11,7 +17,7 @@ interface IShopSystem {
   finalizedBaskets?: BasketList;
   shopProducts: ProductList;
   addProductToShop: (
-    roductID: string,
+    productID: string,
     product: Product,
     amount: number
   ) => void;
@@ -26,17 +32,13 @@ interface IShopSystem {
 class ShopSystem implements IShopSystem {
   baskets: BasketList;
   finalizedBaskets?: BasketList;
+  // basketsToAccept?: BasketList;
   shopProducts: ProductList;
-  DISCOUNT_TO_VALUE_MAPPER: Record<BonusCodes, number> = {
-    FIRST_SHOPPING: 10,
-    HAPPY_BASKET: 10,
-    ROLLING_LOUD_TICKET: 20,
-    SUBSCRIBING_TO_NEWSLETTER: 30,
-  };
 
   constructor() {
     this.baskets = new BasketList();
     this.finalizedBaskets = new BasketList();
+    // this.basketsToAccept = new BasketList();
     this.shopProducts = new ProductList();
   }
 
@@ -58,6 +60,18 @@ class ShopSystem implements IShopSystem {
     this.baskets.items.set(new Basket().id, new Basket());
   }
 
+  addCreatedBasket(basket: Basket): void {
+    this.baskets.items.set(basket.id, basket);
+    this.baskets.items.get(basket.id).productsList.items.forEach((element) => {
+      if (!this.isProductAvailableinShop(element.product.id)) {
+        throw new Error(`${element.product.name}`);
+      }
+    });
+    // if (basket.bonusCode) {
+    //   this.addBonusCode(basket.id, basket.bonusCode);
+    // }
+  }
+
   addProductToBasket(
     productID: string,
     product: Product,
@@ -65,12 +79,10 @@ class ShopSystem implements IShopSystem {
     basketID: string
   ): void {
     this.isProductAvailableInShopSystem(productID, this.shopProducts);
-    this.isBasketAvailable(basketID, this.baskets);
+    this.isBasketAvailable(basketID);
     const basket = this.baskets.items.get(basketID);
     basket.addProduct(productID, product, amount);
   }
-
-  isProductAmountAvailableInShop(amount, productID) {}
 
   deleteProductFromBasket(
     productID: string,
@@ -78,42 +90,106 @@ class ShopSystem implements IShopSystem {
     amount: number
   ): void {
     this.isProductAvailableInShopSystem(productID, this.shopProducts);
-    this.isBasketAvailable(basketID, this.baskets);
+    this.isBasketAvailable(basketID);
     const basket = this.baskets.items.get(basketID);
     basket.deleteProduct(productID, amount);
   }
 
-  addBonusCode(bonusCode: BonusCodes, basketID: string): void {
-    this.isBasketAvailable(basketID, this.baskets);
+  addBonusCode(basketID: string, bonusCodeFromShopSystem?: BonusCodes): void {
+    this.isBasketAvailable(basketID);
     const basket = this.baskets.items.get(basketID);
-    this.isBonusCodeAvailable(bonusCode);
-    basket.setDiscount(this.DISCOUNT_TO_VALUE_MAPPER[bonusCode]);
+    basket.bonusCode = bonusCodeFromShopSystem;
+    this.isBonusCodeProvidedInBasket(basketID);
+    this.isBonusCodeAvailable(basket.bonusCode);
+    basket.extraDiscount = availableBonusCodes.get(basket.bonusCode).value;
   }
 
-  finalizeBasket(basketId: string) {
-    this.isBasketAvailable(basketId, this.baskets);
-    this.baskets.items.get(basketId).finalize();
-    this.finalizedBaskets.items.set(basketId, this.baskets.items.get(basketId));
-    if (this.finalizedBaskets.items.get(basketId).extraDiscount) {
-      const keyFromBasket = Object.keys(this.DISCOUNT_TO_VALUE_MAPPER).find(
-        (key) => {
-          return (
-            this.DISCOUNT_TO_VALUE_MAPPER[key] ===
-            this.baskets.items.get(basketId).extraDiscount
-          );
-        }
-      );
-      delete this.DISCOUNT_TO_VALUE_MAPPER[keyFromBasket];
+  showListOfUsedBonusCodes(): BonusCodes[] {
+    let ListOfUsedBonusCodes = [];
+    availableBonusCodes.forEach((value, key) => {
+      if (value.wasUsed) {
+        return ListOfUsedBonusCodes.push(key);
+      }
+    });
+    if (ListOfUsedBonusCodes.length === 0) {
+      throw new Error("Nothing was Used");
+    }
+    return ListOfUsedBonusCodes;
+  }
+
+  showListOfUnusedBonusCodes(): BonusCodes[] {
+    let ListOfUnusedBonusCodes = [];
+    availableBonusCodes.forEach((value, key) => {
+      if (!value.wasUsed) {
+        return ListOfUnusedBonusCodes.push(key);
+      }
+    });
+    if (ListOfUnusedBonusCodes.length === 0) {
+      throw new Error("Everything was Used");
+    }
+    return ListOfUnusedBonusCodes;
+  }
+
+  showProducts(): ProductList {
+    return this.shopProducts;
+  }
+
+  finalizeBasket(basketID: string) {
+    this.isBasketAvailable(basketID);
+    this.baskets.items.get(basketID).finalize();
+    this.isBonusCodeAvailable(this.baskets.items.get(basketID).bonusCode);
+    this.differAmountOfProductsBetweenBasketAndShopProducts(
+      this.baskets,
+      basketID
+    );
+    this.finalizedBaskets.items.set(basketID, this.baskets.items.get(basketID));
+    if (this.finalizedBaskets.items.get(basketID).bonusCode) {
+      availableBonusCodes.get(
+        this.finalizedBaskets.items.get(basketID).bonusCode
+      ).wasUsed = true;
+    }
+    this.deleteBasket(basketID);
+  }
+
+  listFinalizedBasket(): BasketList {
+    return this.finalizedBaskets;
+  }
+
+  private isBonusCodeProvidedInBasket(basketID: string) {
+    if (!this.baskets.items.get(basketID).bonusCode) {
+      throw new Error("Please add bonus code in ShopSystem or in Basket");
     }
   }
 
-  private isBonusCodeAvailable(bonusCode: BonusCodes) {
-    if (
-      !Object.keys(this.DISCOUNT_TO_VALUE_MAPPER).filter(
-        (element) => element === bonusCode
-      )
-    ) {
-      throw new Error("This bonus code is already used or is expired");
+  private deleteBasket(basketID: string) {
+    this.isBasketAvailable(basketID);
+    this.baskets.items.delete(basketID);
+  }
+
+  private differAmountOfProductsBetweenBasketAndShopProducts(
+    list: BasketList,
+    basketID: string
+  ) {
+    list.items.get(basketID).productsList.items.forEach((element) => {
+      const actualStock = this.shopProducts.items.get(
+        element.product.id
+      ).amount;
+      this.shopProducts.items.get(element.product.id).amount =
+        this.shopProducts.items.get(element.product.id).amount - element.amount;
+      if (this.shopProducts.items.get(element.product.id).amount < 0) {
+        throw new Error(
+          `We have only ${actualStock} of ${element.product.name}.`
+        );
+      }
+      if (this.shopProducts.items.get(element.product.id).amount === 0) {
+        this.shopProducts.deleteProduct(element.product.id);
+      }
+    });
+  }
+
+  private isBonusCodeAvailable(bonusCode: BonusCodes): void {
+    if (availableBonusCodes.get(bonusCode).wasUsed === true) {
+      throw new Error(`${bonusCode} is already used or is expired`);
     }
   }
 
@@ -123,70 +199,20 @@ class ShopSystem implements IShopSystem {
   ): void {
     if (!list.items.get(productID)) {
       throw new Error(
-        "Product is not available at this time. Please try again later"
+        `Product with ID: ${productID} is not available in our shop. Please remove Product from basket`
       );
     }
   }
 
-  private isBasketAvailable(basketID: string, list: BasketList): void {
-    if (!list.items.get(basketID)) {
-      throw new Error(`Please add basket to ShopList with id: ${basketID}`);
+  private isBasketAvailable(basketID: string): void {
+    if (!basketID) {
+      throw new Error("This basket wasn't created.");
+    }
+    if (!this.baskets.items.get(basketID)) {
+      throw new Error(`Please add basket with id: ${basketID} to ShopSystem`);
     }
   }
-
-  //   showAndCalculateNumberOfProducts = (basketId: string) => {
-  //     if (this.baskets.has(basketId)) {
-  //       const basket = this.baskets.get(basketId)
-  //       const arr = Array.from(Object.values(basket))
-  //       arr.reduce((acc, element
-  //     ) => {acc.push([element.products.length, element.products]);
-  //     return acc;
-  //   }, []);
-  // }
-
-  // return Array.from(this.baskets.values()).reduce((acc, element) => {
-  //   acc.push([element.products.length, element.products]);
-  //   return acc;
-  // }, []);
-
-  // showListOfUsedDiscountCodes = () => {
-  //   return this.baskets.reduce((acc, element) => {
-  //     acc.push([element.id, element.extraDiscount]);
-  //     return acc;
-  //   }, []);
-  // };
-
-  // lista kodow i sprawdzenie czy ktos nie wykorzystuje go ponownie
-
-  // showListOfUnusedDiscountCodes = () => {
-  //   return this.baskets.reduce((acc, element) => {
-  //     for (const [name, price] of Object.entries(EXTRADISCOUNTS)) {
-  //       if (price !== element.extraDiscount) {
-  //         acc.push(name);
-  //       }
-  //       return acc;
-  //     }
-  //   }, []);
-  // };
-
-  // listFinalizedBaskets = (): IBasket[] => {
-  //   return this.baskets.reduce((acc, element) => {
-  //     if (element.finalizedAt !== undefined) {
-  //       acc.push([element, "FINALIZED: " + element.finalizedAt]);
-  //     }
-  //     return acc;
-  //   }, []);
-  // };
 }
-
-// liste kodow rabatowych zrealizowanych i nie zrealizowanych, // UNIKALNE
-
-// showAndCalculateNumberOfProducts liste produktow razem z ich iloscia (gdy klient realizuje koszyk liczba powinna sie zmienic), // inwentaryzacja
-// zrealizowanie koszyka Basket
-// listFinalizedBaskets liste zrealizowanych koszykow razem z data realizacji,
-// OK changeProductCategory mozliwosc dodania produktu lub produktow do kategorii,
-// OK deleteProductsFromShop usuniecie produktu lub produktow ze sklepu,
-// OK addProductsToShop mozliwosc dodania produktu lub produktow do skelpu,
 
 const shopSystem = new ShopSystem();
 shopSystem.addProductToShop(shoePolish.id, shoePolish, 10);
@@ -194,50 +220,44 @@ shopSystem.addProductToShop(shoePolish.id, shoePolish, 10);
 shopSystem.changeProductCategory(shoePolish.id, CATEGORIES.CHILDREN);
 
 shopSystem.addProductToShop(levisMaleShoes.id, levisMaleShoes, 20);
-
+shopSystem.addCreatedBasket(myBasket);
 shopSystem.addNewBasket();
-shopSystem.addNewBasket();
-
 shopSystem.addProductToBasket(
   shoePolish.id,
   shoePolish,
-  20,
+  5,
   [...shopSystem.baskets.items.keys()][0]
 );
+
+shopSystem.addBonusCode(
+  [...shopSystem.baskets.items.keys()][0],
+  "HAPPY_BASKET"
+);
+
+// shopSystem.finalizeBasket([...shopSystem.baskets.items.keys()][0]);
 
 shopSystem.addProductToBasket(
   levisMaleShoes.id,
   levisMaleShoes,
-  10,
-  [...shopSystem.baskets.items.keys()][1]
-);
-
-shopSystem.deleteProductFromBasket(
-  levisMaleShoes.id,
-  [...shopSystem.baskets.items.keys()][1],
-  20
-);
-
-console.log(shopSystem, [...shopSystem.baskets.items.keys()][1]);
-
-shopSystem.addBonusCode(
-  BONUSCODES.FIRST_SHOPPING,
-  [...shopSystem.baskets.items.keys()][1]
-);
-
-shopSystem.finalizeBasket([...shopSystem.baskets.items.keys()][1]);
-
-shopSystem.addBonusCode(
-  BONUSCODES.FIRST_SHOPPING,
+  5,
   [...shopSystem.baskets.items.keys()][0]
 );
 
-console.log(shopSystem);
 console.dir(shopSystem, { depth: null });
-// console.log(shopSystem.DISCOUNT_TO_VALUE_MAPPER)
 
-// 1. ustawiasz discount w shopsystemie dla koszyka
-// 2. w shopd systemie sprawdzasz, czy ten kod jest dostępny
-// 3. ustawiasz go w Basket
-// 4. basket liczy sobie cene po znizce
-// 5. jak koszyk się zrealizacuje, to ustawiasz kod na zuzyty
+// console.log(shopSystem.baskets);
+
+shopSystem.finalizeBasket([...shopSystem.baskets.items.keys()][0]);
+
+shopSystem.addBonusCode(myBasket.id, "FIRST_SHOPPING");
+
+// shopSystem.finalizeBasket(myBasket.id);
+
+// console.log(shopSystem);
+// console.dir(shopSystem, { depth: null });
+
+console.log(shopSystem.finalizedBaskets);
+
+console.log(availableBonusCodes);
+
+// console.log(shopSystem.showListOfUnusedBonusCodes());

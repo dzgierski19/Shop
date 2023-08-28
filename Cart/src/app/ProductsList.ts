@@ -100,13 +100,3 @@ productList.addProductWithAmount(nikeFemaleShoes.id, nikeFemaleShoes, 6);
 productList.addProductWithAmount(levisMaleShoes.id, levisMaleShoes, 10);
 productList.addProductWithAmount(gucciShoes.id, gucciShoes, 3);
 productList.deleteProductWithAmount(gucciShoes.id, 2);
-
-console.log(productList);
-
-console.log(productList.findProduct(levisMaleShoes.id));
-
-// [...mapa]
-
-// 2. projekt pod UOD
-
-// w 81 musiałem dodać else bo wywalalo blad przy wyszukiwaniu gdy bylo 0 produktow

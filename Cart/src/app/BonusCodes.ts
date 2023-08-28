@@ -16,13 +16,3 @@ export const availableBonusCodes = new Map<
   ["SUBSCRIBING_TO_NEWSLETTER", { value: 20, wasUsed: false }],
   ["ROLLING_LOUD_TICKET", { value: 30, wasUsed: false }],
 ]);
-
-function changeBonus(value: BonusCodes): void {
-  availableBonusCodes.get(value).value = 20;
-}
-
-changeBonus(BONUSCODES.FIRST_SHOPPING);
-
-console.log(availableBonusCodes);
-
-//dodac basketID przy addBonusCode()
