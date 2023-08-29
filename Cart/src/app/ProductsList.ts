@@ -49,15 +49,15 @@ products.set(gucciShoes.id, gucciShoes);
 export class List<T> {
   constructor(public items: Map<string, T> = new Map()) {}
 
-  addProduct(productID: string, product: T): void {
+  addItem(productID: string, product: T): void {
     this.items.set(productID, product);
   }
 
-  findProduct(id: string): boolean {
-    return this.items.has(id);
+  findItem(id: string): T {
+    return this.items.get(id);
   }
 
-  deleteProduct(id: string): void {
+  deleteItem(id: string): void {
     this.items.delete(id);
   }
 }
@@ -73,20 +73,28 @@ export class ProductList extends List<ProductWithAmount> {
     this.items.set(productID, { product, amount });
   }
   deleteProductWithAmount(productID: string, amount: number): void {
+    this.isProductAvailable(productID);
     this.isAmountAvailable(productID, amount);
-    const actualAmount = this.items.get(productID).amount;
-    const amountAfterDeleting = actualAmount - amount;
+    const product = this.findItem(productID);
+    const amountAfterDeleting = product.amount - amount;
     if (amountAfterDeleting === 0) {
-      this.deleteProduct(productID);
-    } else this.items.get(productID).amount = amountAfterDeleting;
+      this.deleteItem(productID);
+      return;
+    }
+    product.amount = amountAfterDeleting;
+  }
+
+  private isProductAvailable(id: string): void {
+    if (!this.items.get(id)) {
+      throw new Error("Product is not available");
+    }
   }
 
   private isAmountAvailable(id: string, amount: number): void {
-    if (amount > this.items.get(id).amount) {
+    const product = this.items.get(id);
+    if (amount > product.amount) {
       throw new Error(
-        `Maximum number of ${
-          this.items.get(id).product.name
-        } you can delete is ${this.items.get(id).amount}.`
+        `Maximum number of ${product.product.name} you can delete is ${product.amount}.`
       );
     }
   }

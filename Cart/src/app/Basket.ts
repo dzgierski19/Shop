@@ -20,7 +20,6 @@ export interface IBasket {
   calculateBasketPriceWithoutDiscount: () => number;
   calculateBasketPriceAfterDiscount: () => number;
   calculateDiscount: () => number;
-  // getProducts: () => IProduct[];
   deleteProduct: (id: string, amount: number) => void;
   addProduct: (id: string, product: Product, amount: number) => void;
   // setDiscount: (discount: number) => void;
@@ -123,3 +122,5 @@ myBasket.addProduct(shoePolish.id, shoePolish, 5);
 // myBasket.addProduct(gucciShoes.id, gucciShoes, 5);
 
 // console.dir(myBasket, { depth: null });
+
+///dodac product isProductAvailable
