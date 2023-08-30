@@ -1,14 +1,6 @@
-import { BONUSCODES, BonusCodes, availableBonusCodes } from "./BonusCodes";
-import { IProduct, Product } from "./Product";
-import {
-  List,
-  ProductList,
-  adidasChildrenShoes,
-  gucciShoes,
-  levisMaleShoes,
-  nikeFemaleShoes,
-  shoePolish,
-} from "./ProductsList";
+import { BonusCodes, availableBonusCodes } from "./BonusCodes";
+import { Product } from "./Product";
+import { ProductList, shoePolish } from "./ProductsList";
 import { v4 as uuidv4 } from "uuid";
 
 export interface IBasket {

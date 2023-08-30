@@ -70,11 +70,11 @@ export class Product implements IProduct {
   //   return discount;
   // }
 
-  private isProductEmptyString = (name: string) => {
+  private isProductEmptyString(name: string): void {
     if (name.length === 0) {
       throw new Error("Please type something");
     }
-  };
+  }
 
   private isPriceMoreThanZero = (price: number) => {
     if (price < 0) {
