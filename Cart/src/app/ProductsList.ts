@@ -47,6 +47,12 @@ export class List<T> {
   }
 }
 
+export const exampleProduct = new Product(
+  "example Product",
+  CATEGORIES.ACCESSORIES,
+  2000
+);
+
 export type ProductWithAmount = { product: Product; amount: number };
 
 export class ProductList extends List<ProductWithAmount> {
