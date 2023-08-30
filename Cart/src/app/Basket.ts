@@ -14,15 +14,14 @@ import { v4 as uuidv4 } from "uuid";
 export interface IBasket {
   readonly id: string;
   productsList: ProductList;
+  bonusCode?: BonusCodes;
   extraDiscount?: number;
   finalizedAt?: Date;
-  bonusCode?: BonusCodes;
   calculateBasketPriceWithoutDiscount: () => number;
   calculateBasketPriceAfterDiscount: () => number;
   calculateDiscount: () => number;
   deleteProduct: (id: string, amount: number) => void;
   addProduct: (id: string, product: Product, amount: number) => void;
-  // setDiscount: (discount: number) => void;
   addBonusCode: (bonusCode: BonusCodes) => void;
   finalize: () => void;
 }
@@ -77,22 +76,19 @@ export class Basket implements IBasket {
     );
   }
 
-  // getProducts(): IProduct[] {
-  //   return this.products;
-  // }
   addBonusCode(bonusCode: BonusCodes): void {
     this.bonusCode = bonusCode;
     this.setDiscount(availableBonusCodes.get(bonusCode).value);
   }
 
-  private setDiscount(discount: number): void {
-    this.isDiscountInRange(discount);
-    this.extraDiscount = discount;
-  }
-
   finalize() {
     this.isBasketEmpty();
     this.finalizedAt = new Date();
+  }
+
+  private setDiscount(discount: number): void {
+    this.isDiscountInRange(discount);
+    this.extraDiscount = discount;
   }
 
   private isBasketEmpty(): void {
@@ -114,13 +110,3 @@ export class Basket implements IBasket {
 export const myBasket = new Basket();
 
 myBasket.addProduct(shoePolish.id, shoePolish, 5);
-
-// myBasket.deleteProduct(shoePolish.id, 5);
-
-// myBasket.addProduct(adidasChildrenShoes.id, adidasChildrenShoes, 5);
-
-// myBasket.addProduct(gucciShoes.id, gucciShoes, 5);
-
-// console.dir(myBasket, { depth: null });
-
-///dodac product isProductAvailable

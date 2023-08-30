@@ -17,6 +17,30 @@ interface IShopSystem {
   ) => void;
   deleteProductFromShop: (productID: string, amount: number) => void;
   isProductAvailableinShop: (productID: string) => boolean;
+  changeProductCategory: (id: string, category: Categories) => void;
+  addNewBasket: () => void;
+  addCreatedBasket(basket: Basket): void;
+  addProductToBasket: (
+    productID: string,
+    product: Product,
+    amount: number,
+    basketID: string
+  ) => void;
+  deleteProductFromBasket: (
+    productID: string,
+    basketID: string,
+    amount: number
+  ) => void;
+  addBonusCode: (
+    basketID: string,
+    bonusCodeFromShopSystem?: BonusCodes
+  ) => void;
+
+  showListOfUsedBonusCodes: () => BonusCodes[];
+  showListOfUnusedBonusCodes: () => BonusCodes[];
+  showProducts: () => ProductList;
+  finalizeBasket: (basketID: string) => void;
+  listFinalizedBasket: () => BasketList;
 }
 
 class ShopSystem implements IShopSystem {
@@ -55,9 +79,6 @@ class ShopSystem implements IShopSystem {
         throw new Error(`${element.product.name}`);
       }
     });
-    // if (basket.bonusCode) {
-    //   this.addBonusCode(basket.id, basket.bonusCode);
-    // }
   }
 
   addProductToBasket(
@@ -126,7 +147,7 @@ class ShopSystem implements IShopSystem {
     return this.shopProducts;
   }
 
-  finalizeBasket(basketID: string) {
+  finalizeBasket(basketID: string): void {
     this.isBasketAvailable(basketID);
     const basket = this.baskets.findItem(basketID);
     basket.finalize();
@@ -163,16 +184,19 @@ class ShopSystem implements IShopSystem {
     basketID: string
   ) {
     list.items.get(basketID).productsList.items.forEach((element) => {
-      let actualAmountOfProduct = this.shopProducts.items.get(
-        element.product.id
-      ).amount;
-      actualAmountOfProduct -= element.amount;
-      if (actualAmountOfProduct < 0) {
+      let product = this.shopProducts.items.get(element.product.id);
+      if (!product) {
+        throw new Error(`${element.product.name} is not available`);
+      }
+      product.amount -= element.amount;
+      if (product.amount < 0) {
         throw new Error(
-          `We have only ${actualAmountOfProduct} of ${element.product.name}.`
+          `${element.product.name} product is not available in the amount: ${
+            element.amount
+          }, we need to add amount: ${-product.amount} to our ShopList.`
         );
       }
-      if (actualAmountOfProduct === 0) {
+      if (product.amount === 0) {
         this.shopProducts.deleteItem(element.product.id);
       }
     });
@@ -214,19 +238,22 @@ shopSystem.addCreatedBasket(myBasket);
 shopSystem.addProductToBasket(
   levisMaleShoes.id,
   levisMaleShoes,
-  20,
+  18,
   [...shopSystem.baskets.items.keys()][0]
 );
+
+shopSystem.addNewBasket();
 
 shopSystem.addProductToBasket(
   levisMaleShoes.id,
   levisMaleShoes,
-  1,
-  [...shopSystem.baskets.items.keys()][0]
+  3,
+  [...shopSystem.baskets.items.keys()][1]
 );
 shopSystem.finalizeBasket([...shopSystem.baskets.items.keys()][0]);
 
+shopSystem.finalizeBasket([...shopSystem.baskets.items.keys()][0]);
 // shopSystem.finalizeBasket([...shopSystem.baskets.items.keys()][0]);
 
 console.dir(shopSystem.listFinalizedBasket(), { depth: null });
-console.log(shopSystem.shopProducts);
+console.log(shopSystem.shopProducts, { depth: null });

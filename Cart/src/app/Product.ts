@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from "uuid";
 export interface IProduct {
   name: string;
   category: Categories;
-  id: string;
+  readonly id: string;
   price: number;
   discount?: Discounts;
 
@@ -13,10 +13,11 @@ export interface IProduct {
   setNewPrice: (price: number) => void;
   setNewCategory: (category: Categories) => void;
   calculatePrice: () => number;
+  setNewDiscount: (discount: Discounts) => void;
 }
 
 export class Product implements IProduct {
-  readonly id: string;
+  readonly id = uuidv4();
   name: string;
   category: Categories;
   price: number;
@@ -29,7 +30,7 @@ export class Product implements IProduct {
   ) {
     this.isProductEmptyString(name);
     this.isPriceMoreThanZero(price);
-    this.isDiscountInRange(discount);
+    // this.isDiscountInRange(discount);
     this.id = uuidv4();
     this.name = name;
     this.category = category;
@@ -52,7 +53,7 @@ export class Product implements IProduct {
   };
 
   setNewDiscount = (discount: Discounts) => {
-    this.isDiscountInRange(discount);
+    // this.isDiscountInRange(discount);
     this.discount = discount;
   };
   calculatePrice = () => {
@@ -62,12 +63,12 @@ export class Product implements IProduct {
     return this.price;
   };
 
-  private isDiscountInRange(discount: number): number {
-    if (discount < 0 && discount > 100) {
-      throw new Error("Wrong discount provided, discount must be in range");
-    }
-    return discount;
-  }
+  // private isDiscountInRange(discount: number): number {
+  //   if (discount < 0 && discount > 100) {
+  //     throw new Error("Wrong discount provided, discount must be in range");
+  //   }
+  //   return discount;
+  // }
 
   private isProductEmptyString = (name: string) => {
     if (name.length === 0) {

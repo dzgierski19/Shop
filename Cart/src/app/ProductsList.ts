@@ -31,21 +31,6 @@ export const shoePolish = new Product(
 
 export const gucciShoes = new Product("Gucci shoes", CATEGORIES.PREMIUM, 4000);
 
-// export const shoePolishWithAmount = { shoePolish, amount: 5 };
-// export const adidasChildrenShoesWithAmount = {
-//   adidasChildrenShoes,
-//   amount: 10,
-// };
-// export const nikeFemaleShoesWithAmount = { nikeFemaleShoes, amount: 5 };
-// export const levisMaleShoesWithAmount = { levisMaleShoes, amount: 3 };
-// export const gucciShoesWithAmount = { gucciShoes, amount: 2 };
-
-export const products = new Map<string, IProduct>();
-products.set(levisMaleShoes.id, levisMaleShoes);
-products.set(nikeFemaleShoes.id, nikeFemaleShoes);
-products.set(adidasChildrenShoes.id, adidasChildrenShoes);
-products.set(gucciShoes.id, gucciShoes);
-
 export class List<T> {
   constructor(public items: Map<string, T> = new Map()) {}
 
@@ -70,6 +55,10 @@ export class ProductList extends List<ProductWithAmount> {
     product: Product,
     amount: number
   ): void {
+    if (this.items.get(productID)) {
+      this.findItem(productID).amount += amount;
+      return;
+    }
     this.items.set(productID, { product, amount });
   }
   deleteProductWithAmount(productID: string, amount: number): void {
@@ -108,3 +97,4 @@ productList.addProductWithAmount(nikeFemaleShoes.id, nikeFemaleShoes, 6);
 productList.addProductWithAmount(levisMaleShoes.id, levisMaleShoes, 10);
 productList.addProductWithAmount(gucciShoes.id, gucciShoes, 3);
 productList.deleteProductWithAmount(gucciShoes.id, 2);
+console.dir(productList, { depth: null });
