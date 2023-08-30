@@ -1,7 +1,6 @@
 import { Basket } from "../app/Basket";
 import { CATEGORIES } from "../app/Categories";
 import { Product } from "../app/Product";
-import { levisMaleShoes } from "../app/ProductsList";
 
 const exampleProduct = new Product(
   "example Product",
@@ -38,5 +37,13 @@ describe("Basket test suite", () => {
   it("should finalize Basket", () => {
     exampleBasket.finalize();
     expect(exampleBasket.finalizedAt).toBeDefined();
+  });
+  describe("It should throw error when: ", () => {
+    it("finalize empty Basket", () => {
+      function expectError() {
+        new Basket().finalize();
+      }
+      expect(expectError).toThrow();
+    });
   });
 });

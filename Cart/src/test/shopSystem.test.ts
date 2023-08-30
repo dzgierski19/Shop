@@ -1,0 +1,1 @@
+describe("shopList test suite", () => {});
