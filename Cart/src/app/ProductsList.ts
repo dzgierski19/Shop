@@ -47,7 +47,7 @@ export class List<T> {
   }
 }
 
-export type ProductWithAmount = { product: IProduct; amount: number };
+export type ProductWithAmount = { product: Product; amount: number };
 
 export class ProductList extends List<ProductWithAmount> {
   addProductWithAmount(
