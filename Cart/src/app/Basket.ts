@@ -1,5 +1,5 @@
 import { BonusCodes, availableBonusCodes } from "./BonusCodes";
-import { Product } from "./Product";
+import { IProduct, Product } from "./Product";
 import { ProductList, shoePolish } from "./ProductsList";
 import { v4 as uuidv4 } from "uuid";
 
@@ -28,7 +28,7 @@ export class Basket implements IBasket {
     this.productsList = new ProductList();
   }
 
-  addProduct(id: string, product: Product, amount: number): void {
+  addProduct(id: string, product: IProduct, amount: number): void {
     this.productsList.addProductWithAmount(id, product, amount);
   }
 
@@ -98,7 +98,3 @@ export class Basket implements IBasket {
     return discount;
   }
 }
-
-export const myBasket = new Basket();
-
-myBasket.addProduct(shoePolish.id, shoePolish, 5);

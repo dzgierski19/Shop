@@ -4,8 +4,8 @@ import { ProductList, shoePolish } from "../app/ProductsList";
 
 describe("ProductsList test suite", () => {
   let exampleProductList: ProductList;
-  let exampleProduct: Product;
-  let exampleProduct2: Product;
+  let exampleProduct: IProduct;
+  let exampleProduct2: IProduct;
 
   beforeEach(() => {
     exampleProductList = new ProductList();

@@ -40,7 +40,7 @@ export class Product implements IProduct {
 
   setNewName = (name: string) => {
     this.isProductEmptyString(name);
-    this.name = name;
+    this.name = name.trim();
   };
 
   setNewPrice = (price: number) => {

@@ -1,20 +1,20 @@
-import { Basket } from "../app/Basket";
+import { Basket, IBasket } from "../app/Basket";
 import { CATEGORIES } from "../app/Categories";
 import { Product } from "../app/Product";
 
-const exampleProduct = new Product(
+export const exampleProduct = new Product(
   "example Product",
   CATEGORIES.ACCESSORIES,
   2000
 );
-const exampleProduct2 = new Product(
+export const exampleProduct2 = new Product(
   "example2 Product",
   CATEGORIES.MALE,
   1500,
   30
 );
 describe("Basket test suite", () => {
-  let exampleBasket: Basket;
+  let exampleBasket: IBasket;
   beforeEach(() => {
     exampleBasket = new Basket();
     exampleBasket.addProduct(exampleProduct.id, exampleProduct, 10);

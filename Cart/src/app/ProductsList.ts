@@ -47,18 +47,12 @@ export class List<T> {
   }
 }
 
-export const exampleProduct = new Product(
-  "example Product",
-  CATEGORIES.ACCESSORIES,
-  2000
-);
-
-export type ProductWithAmount = { product: Product; amount: number };
+export type ProductWithAmount = { product: IProduct; amount: number };
 
 export class ProductList extends List<ProductWithAmount> {
   addProductWithAmount(
     productID: string,
-    product: Product,
+    product: IProduct,
     amount: number
   ): void {
     if (this.items.get(productID)) {

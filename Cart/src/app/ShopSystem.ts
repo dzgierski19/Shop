@@ -1,28 +1,26 @@
-import { Basket, IBasket, myBasket } from "./Basket";
-import { CATEGORIES, Categories } from "./Categories";
-import { BonusCodes, BONUSCODES, availableBonusCodes } from "./BonusCodes";
+import { Basket, IBasket } from "./Basket";
+import { Categories } from "./Categories";
+import { BonusCodes, availableBonusCodes } from "./BonusCodes";
 import { IProduct, Product } from "./Product";
 import { List, ProductList, levisMaleShoes, shoePolish } from "./ProductsList";
 
-class BasketList extends List<IBasket> {}
+class BasketList extends List<Basket> {}
 
-interface IShopSystem {
+export interface IShopSystem {
   baskets: BasketList;
   finalizedBaskets?: BasketList;
   shopProducts: ProductList;
   addProductToShop: (
     productID: string,
-    product: Product,
+    product: IProduct,
     amount: number
   ) => void;
   deleteProductFromShop: (productID: string, amount: number) => void;
-  isProductAvailableinShop: (productID: string) => boolean;
+  // isProductAvailableinShop: (productID: string) => boolean;
   changeProductCategory: (id: string, category: Categories) => void;
   addNewBasket: () => void;
-  addCreatedBasket(basket: Basket): void;
   addProductToBasket: (
     productID: string,
-    product: Product,
     amount: number,
     basketID: string
   ) => void;
@@ -31,27 +29,33 @@ interface IShopSystem {
     basketID: string,
     amount: number
   ) => void;
-  addBonusCode: (
-    basketID: string,
-    bonusCodeFromShopSystem?: BonusCodes
-  ) => void;
+  addBonusCode: (basketID: string, bonusCode: BonusCodes) => void;
 
   showListOfUsedBonusCodes: () => BonusCodes[];
   showListOfUnusedBonusCodes: () => BonusCodes[];
   showProducts: () => ProductList;
   finalizeBasket: (basketID: string) => void;
   listFinalizedBasket: () => BasketList;
+  resetInstance: () => void;
 }
 
-class ShopSystem implements IShopSystem {
+export class ShopSystem implements IShopSystem {
+  private static instance: ShopSystem;
   baskets: BasketList;
   finalizedBaskets?: BasketList;
   shopProducts: ProductList;
 
-  constructor() {
+  private constructor() {
     this.baskets = new BasketList();
     this.finalizedBaskets = new BasketList();
     this.shopProducts = new ProductList();
+  }
+
+  public static getInstance(): ShopSystem {
+    if (!ShopSystem.instance) {
+      ShopSystem.instance = new ShopSystem();
+    }
+    return ShopSystem.instance;
   }
 
   addProductToShop(productID: string, product: Product, amount: number): void {
@@ -60,47 +64,31 @@ class ShopSystem implements IShopSystem {
   deleteProductFromShop(productID: string, amount: number): void {
     this.shopProducts.deleteProductWithAmount(productID, amount);
   }
-  isProductAvailableinShop(productID: string): boolean {
-    this.isProductAvailableInShopSystem(productID);
-    return true;
-  }
+  // isProductAvailableinShop(productID: string): boolean {
+  //   this.isProductAvailableInShopSystem(productID);
+  //   return true;
+  // }
   changeProductCategory = (id: string, category: Categories): void => {
-    this.shopProducts.items.get(id).product.category = category;
+    this.shopProducts.findItem(id).product.category = category;
   };
 
   addNewBasket(): void {
-    this.baskets.items.set(new Basket().id, new Basket());
-  }
-
-  addCreatedBasket(basket: Basket): void {
-    this.baskets.items.set(basket.id, basket);
-    this.baskets.items.get(basket.id).productsList.items.forEach((element) => {
-      if (!this.isProductAvailableinShop(element.product.id)) {
-        throw new Error(`${element.product.name}`);
-      }
-    });
+    this.baskets.addItem(new Basket().id, new Basket());
   }
 
   addProductToBasket(
     productID: string,
-    product: Product,
     amount: number,
     basketID: string
   ): void {
     this.isProductAvailableInShopSystem(productID);
-    this.isBasketAvailable(basketID);
-    const basket = this.baskets.items.get(basketID);
-    basket.addProduct(productID, product, amount);
-    if (
-      basket.productsList.items.get(productID).amount >
-      this.shopProducts.items.get(productID).amount
-    ) {
-      throw new Error(
-        `We have ${this.shopProducts.findItem(productID).amount} of ${
-          this.shopProducts.findItem(productID).product.name
-        } available.`
-      );
+    const basket = this.baskets.findItem(basketID);
+    const { amount: productAmount, product: foundProduct } =
+      this.shopProducts.findItem(productID);
+    if (amount > productAmount) {
+      throw new Error(`We have ${amount} of ${foundProduct.name} available.`);
     }
+    basket.addProduct(foundProduct.id, foundProduct, amount);
   }
 
   deleteProductFromBasket(
@@ -114,11 +102,10 @@ class ShopSystem implements IShopSystem {
     basket.deleteProduct(productID, amount);
   }
 
-  addBonusCode(basketID: string, bonusCodeFromShopSystem?: BonusCodes): void {
+  addBonusCode(basketID: string, bonusCode: BonusCodes): void {
     this.isBasketAvailable(basketID);
-    const basket = this.baskets.items.get(basketID);
-    basket.bonusCode = bonusCodeFromShopSystem;
-    this.isBonusCodeProvidedInBasket(basketID);
+    const basket = this.baskets.findItem(basketID);
+    basket.bonusCode = bonusCode;
     this.isBonusCodeAvailable(basket.bonusCode);
     basket.extraDiscount = availableBonusCodes.get(basket.bonusCode).value;
   }
@@ -151,13 +138,13 @@ class ShopSystem implements IShopSystem {
     this.isBasketAvailable(basketID);
     const basket = this.baskets.findItem(basketID);
     basket.finalize();
-    this.isBonusCodeAvailable(basket.bonusCode);
-    this.differAmountOfProductsBetweenBasketAndShopProducts(
-      this.baskets,
-      basketID
-    );
-    this.finalizedBaskets.items.set(basketID, basket);
-    const finalizedBasket = this.finalizedBaskets.items.get(basketID);
+    if (basket.bonusCode) {
+      console.log("aaaaa" + basket.bonusCode);
+      this.isBonusCodeAvailable(basket.bonusCode);
+    }
+    this.differAmountOfProductsBetweenBasketAndShopProducts(basket);
+    this.finalizedBaskets.addItem(basketID, basket);
+    const finalizedBasket = this.finalizedBaskets.findItem(basketID);
     if (finalizedBasket.bonusCode) {
       availableBonusCodes.get(finalizedBasket.bonusCode).wasUsed = true;
     }
@@ -168,25 +155,18 @@ class ShopSystem implements IShopSystem {
     return this.finalizedBaskets;
   }
 
-  private isBonusCodeProvidedInBasket(basketID: string) {
-    if (!this.baskets.items.get(basketID).bonusCode) {
-      throw new Error("Please add bonus code in ShopSystem or in Basket");
-    }
-  }
-
   private deleteBasket(basketID: string) {
     this.isBasketAvailable(basketID);
     this.baskets.items.delete(basketID);
   }
 
-  private differAmountOfProductsBetweenBasketAndShopProducts(
-    list: BasketList,
-    basketID: string
-  ) {
-    list.items.get(basketID).productsList.items.forEach((element) => {
-      let product = this.shopProducts.items.get(element.product.id);
+  private differAmountOfProductsBetweenBasketAndShopProducts(basket: Basket) {
+    basket.productsList.items.forEach((element) => {
+      let product = this.shopProducts.findItem(element.product.id);
       if (!product) {
-        throw new Error(`${element.product.name} is not available`);
+        throw new Error(
+          `Product: ${element.product.name} is not available in our shop at this time.`
+        );
       }
       product.amount -= element.amount;
       if (product.amount < 0) {
@@ -202,11 +182,13 @@ class ShopSystem implements IShopSystem {
     });
   }
 
+  resetInstance(): void {
+    ShopSystem.instance = null;
+  }
+
   private isBonusCodeAvailable(bonusCode: BonusCodes): void {
-    if (bonusCode) {
-      if (availableBonusCodes.get(bonusCode).wasUsed === true) {
-        throw new Error(`${bonusCode} is already used or is expired`);
-      }
+    if (availableBonusCodes.get(bonusCode).wasUsed === true) {
+      throw new Error(`${bonusCode} is already used or is expired`);
     }
   }
 
@@ -228,32 +210,21 @@ class ShopSystem implements IShopSystem {
   }
 }
 
-const shopSystem = new ShopSystem();
+const shopSystem1 = ShopSystem.getInstance();
 
-shopSystem.addProductToShop(shoePolish.id, shoePolish, 10);
+shopSystem1.addNewBasket();
 
-shopSystem.addProductToShop(levisMaleShoes.id, levisMaleShoes, 20);
-shopSystem.addCreatedBasket(myBasket);
-
-shopSystem.addProductToBasket(
+shopSystem1.addProductToShop(levisMaleShoes.id, levisMaleShoes, 5);
+shopSystem1.addProductToBasket(
   levisMaleShoes.id,
-  levisMaleShoes,
-  18,
-  [...shopSystem.baskets.items.keys()][0]
+  5,
+  [...shopSystem1.baskets.items.keys()][0]
+);
+shopSystem1.addBonusCode(
+  [...shopSystem1.baskets.items.keys()][0],
+  "FIRST_SHOPPING"
 );
 
-shopSystem.addNewBasket();
+shopSystem1.finalizeBasket([...shopSystem1.baskets.items.keys()][0]);
 
-shopSystem.addProductToBasket(
-  levisMaleShoes.id,
-  levisMaleShoes,
-  3,
-  [...shopSystem.baskets.items.keys()][1]
-);
-shopSystem.finalizeBasket([...shopSystem.baskets.items.keys()][0]);
-
-shopSystem.finalizeBasket([...shopSystem.baskets.items.keys()][0]);
-// shopSystem.finalizeBasket([...shopSystem.baskets.items.keys()][0]);
-
-console.dir(shopSystem.listFinalizedBasket(), { depth: null });
-console.log(shopSystem.shopProducts, { depth: null });
+// shopSystem1.deleteProductFromShop(levisMaleShoes.id, 7);
