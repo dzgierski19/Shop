@@ -1,1 +1,1 @@
-# TypeScript OOP Exercises
+# Shop exercise
